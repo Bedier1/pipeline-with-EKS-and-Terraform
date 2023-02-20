@@ -21,7 +21,7 @@ pipeline {
                         sh "docker push mohamedbedier/usermgmt:${env.BUILD_NUMBER}"
 
                         sh """
-                         sed -i "s|^\(\s*image:\s*mohamedbedier/usermgmt:v\).*|\1${env.BUILD_NUMBER}|" ./k8s/app.yaml
+                         sed -i "s|^\(\s*image:\s*mohamedbedier/usermgmt:v\).*|\1${env.BUILD_NUMBER}|" ./usermgmt-src-code/k8s/app.yaml
                         """
                     }
                 }
@@ -31,7 +31,7 @@ pipeline {
             steps {
                 script {
                     withKubeConfig([credentialsId: 'eks-creds', serverUrl: '<url for eks>']) {
-                          sh ' kubectl apply -f ./k8s '
+                          sh ' kubectl apply -f ./usermgmt-src-code/k8s '
                       }
                 }
             }
@@ -44,7 +44,7 @@ pipeline {
                         sh 'git config --global user.email "jenkins@example.com"'
                         sh 'git config --global user.name "jenkins"'
 
-                        sh "git remote set-url origin https://${USER}:${PASS}@github.com/Bedier1/ci-cd-k8s.git"
+                        sh "git remote set-url origin https://${USER}:${PASS}@github.com/Bedier1/pipeline-with-EKS-and-Terraform.git"
                         sh 'git add .'
                         sh 'git commit -m "ci: version bump"'
                         sh 'git push origin HEAD:master'
