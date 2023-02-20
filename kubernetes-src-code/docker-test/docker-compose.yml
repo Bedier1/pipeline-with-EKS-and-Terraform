@@ -1,0 +1,25 @@
+version: '3.7'
+services:
+  app:
+    image: mohamedbedier/usermgmt:v2
+    environment:
+      - DB_HOSTNAME=mysql
+      - DB_PORT=3306
+      - DB_NAME=webappdb
+      - DB_USERNAME=root
+      - DB_PASSWORD=dbpassword11
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+  mysql:
+    image: mysql:5.6
+    environment:
+#just for testing
+
+      MYSQL_ROOT_PASSWORD: dbpassword11
+      MYSQL_DATABASE: webappdb
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./initdb.sql:/docker-entrypoint-initdb.d/initdb.sql

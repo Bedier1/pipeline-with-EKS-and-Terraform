@@ -1,0 +1,32 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: 
+  name: ebs-sc
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer 
+
+# STORAGE CLASS 
+# 1. A StorageClass provides a way for administrators 
+# to describe the "classes" of storage they offer.
+# 2. Here we are offering EBS Storage for EKS Cluster
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: ebs-mysql-pv-claim
+spec: 
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: ebs-sc
+  resources: 
+    requests:
+      storage: 4Gi
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: usermanagement-dbcreation-script
+data: 
+  mysql_usermgmt.sql: |-
+    DROP DATABASE IF EXISTS webappdb;
+    CREATE DATABASE webappdb; 

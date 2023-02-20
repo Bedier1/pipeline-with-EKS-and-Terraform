@@ -1,0 +1,6 @@
+aws sts assume-role --role-arn "arn:aws:iam::611469625560:role/eks-admin-role" --role-session-name eksadminsession03
+export AWS_ACCESS_KEY_ID=
+export AWS_SECRET_ACCESS_KEY=
+export AWS_SESSION_TOKEN=
+aws eks --region eu-central-1 update-kubeconfig --name <<cluster name >>
+aws eks list-clusters

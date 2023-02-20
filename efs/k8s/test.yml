@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp1-network-lb-service
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: nlb
+spec:
+  type: LoadBalancer
+  selector:
+    app: myapp1
+  ports:
+  - name: http
+    port: 80
+    targetPort: 80
+# Kubernetes Pod - Write to EFS Pod
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: efs-write-app
+spec:
+  containers:
+  - name: efs-write-app
+    image: busybox
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do echo EFS Kubernetes Static Provisioning Test $(date -u) >> /data/efs-static.txt; sleep 5; done"]
+    volumeMounts:
+    - name: persistent-storage
+      mountPath: /data
+  volumes:
+  - name: persistent-storage
+    persistentVolumeClaim:
+      claimName:  efs-claim
+---
+# UserMgmt WebApp Kubernetes Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp1
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: myapp1
+  template:
+    metadata:
+      name: myapp1-pod
+      labels:
+        app: myapp1
+    spec:
+      containers:
+      - name: myapp1-container
+        image: stacksimplify/kubenginx:1.0.0
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        - name: persistent-storage
+          mountPath: /usr/share/nginx/html/efs
+      volumes:
+      - name: persistent-storage
+        persistentVolumeClaim:
+          claimName:  efs-claim

@@ -1,0 +1,56 @@
+#!/usr/bin/env groovy
+pipeline {
+    agent any
+    stages {
+   
+        stage('build app') {
+            steps {
+                script {
+                    echo "building the application..."
+                    sh 'mvn clean package'
+                }
+            }
+        }
+        stage('build image') {
+            steps {
+                script {
+                    echo "building the docker image..."
+                    withCredentials([usernamePassword(credentialsId: 'docker-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        sh "docker build -t mohamedbedier/cicdapp:${env.BUILD_NUMBER} . "
+                        sh "echo $PASS | docker login -u $USER --password-stdin"
+                        sh "docker push mohamedbedier/usermgmt:${env.BUILD_NUMBER}"
+
+                        sh """
+                         sed -i "s|^\(\s*image:\s*mohamedbedier/usermgmt:v\).*|\1${env.BUILD_NUMBER}|" ./k8s/app.yaml
+                        """
+                    }
+                }
+            }
+        }
+        stage('deploy TO Kubernetes') {
+            steps {
+                script {
+                    withKubeConfig([credentialsId: 'eks-creds', serverUrl: '<url for eks>']) {
+                          sh ' kubectl apply -f ./k8s '
+                      }
+                }
+            }
+        }
+        stage('commit version update') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'git-repo', passwordVariable: 'PASS', usernameVariable: 'USER')]) {
+                        // git config here for the first time run
+                        sh 'git config --global user.email "jenkins@example.com"'
+                        sh 'git config --global user.name "jenkins"'
+
+                        sh "git remote set-url origin https://${USER}:${PASS}@github.com/Bedier1/ci-cd-k8s.git"
+                        sh 'git add .'
+                        sh 'git commit -m "ci: version bump"'
+                        sh 'git push origin HEAD:master'
+                    }
+                }
+            }
+        }
+    }
+}
